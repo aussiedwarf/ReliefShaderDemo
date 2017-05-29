@@ -125,7 +125,7 @@ INCLUDEPATH += ../ad/master ../glm/glm src
 SOURCES +=  main.cpp 
 
 
-HEADERS +=  
+HEADERS +=  Camera.hpp
 
 
 

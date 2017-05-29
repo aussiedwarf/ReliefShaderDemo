@@ -2,6 +2,8 @@
  * Textures from http://photosculpt.net/gallery/textures-seamless-tileable/
  * */
 
+#include "Camera.hpp"
+
 #include "adCore/adShader.hpp"
 #include "adCore/adWindow.hpp"
 #include "adCore/adImage.hpp"
@@ -9,8 +11,7 @@
 #include "adText/adPrintLib.hpp"
 #include "adCore/adShader.hpp"
 
-#include "glm/glm.hpp"
-#include "glm/ext.hpp"
+
 
 #include <SDL2/SDL.h>
 
@@ -31,6 +32,7 @@ GLuint   squareCoordsBuffer;
 GLuint   squareIndicesBuffer;
 
 GLuint   textureColor;
+GLuint   textureNormal;
 
 
 void Render(int a_width, int a_height)
@@ -69,16 +71,17 @@ void Render(int a_width, int a_height)
   glVertexAttribPointer(squareShader.m_locations[1], 2, GL_FLOAT, false, 0, 0);
   glEnableVertexAttribArray(squareShader.m_locations[1]);
 
-  //a_gl.activeTexture(a_gl.TEXTURE0);
-  //a_gl.bindTexture(a_gl.TEXTURE_2D, a_buffers.ditherTexture);
-  //a_gl.uniform1i(a_shaders.starShader.u_dither, 0);
-
-  //glUniform1f(m_shaderStar.m_locations[7], m_gamma);//set gamma
   glUniformMatrix4fv(squareShader.m_locations[2], 1, GL_FALSE, (float*)&mvp);
+
+  glUniform3fv(squareShader.m_locations[3], 1, (float*)&lightSource);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, textureColor);
-  glUniform1i(squareShader.m_locations[3],0);
+  glUniform1i(squareShader.m_locations[4],0);
+
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, textureNormal);
+  glUniform1i(squareShader.m_locations[5],1);
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, squareIndicesBuffer);
 
@@ -123,11 +126,14 @@ void LoadData()
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t)*6, squareIndices,
                GL_STATIC_DRAW);
 
-  squareShader.SetNumAttributes(4);
+  squareShader.SetNumAttributes(6);
   squareShader.AddLocation(0, adShader::ATTRIBUTE, "a_pos");
   squareShader.AddLocation(1, adShader::ATTRIBUTE, "a_texCoord");
   squareShader.AddLocation(2, adShader::UNIFORM, "u_mvp");
-  squareShader.AddLocation(3, adShader::UNIFORM, "u_textureColor");
+  squareShader.AddLocation(3, adShader::UNIFORM, "u_light");
+  squareShader.AddLocation(4, adShader::UNIFORM, "u_textureColor");
+  squareShader.AddLocation(5, adShader::UNIFORM, "u_textureNormal");
+
 
 
 
@@ -161,7 +167,7 @@ void LoadData()
 
   squareShader.CreateProgram();
 
-  SDL_Surface* imageColor = adImage::LoadImage("textures/photosculpt-peebles-diffuse.png");
+  SDL_Surface* imageColor = adImage::LoadImage("textures/photosculpt-peebles-diffuse.jpg");
 
   textureColor = adImage::MakeTexture(imageColor);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -169,6 +175,15 @@ void LoadData()
   glBindTexture(GL_TEXTURE_2D, 0);
 
   SDL_FreeSurface(imageColor);
+
+  SDL_Surface* imageNormal = adImage::LoadImage("textures/photosculpt-peebles-normal.jpg");
+
+  textureNormal = adImage::MakeTexture(imageNormal);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  SDL_FreeSurface(imageNormal);
 }
 
 void FreeData()
@@ -178,6 +193,7 @@ void FreeData()
   glDeleteBuffers(1, &squareCoordsBuffer);
   glDeleteBuffers(1, &squareIndicesBuffer);
   glDeleteTextures(1, &textureColor);
+  glDeleteTextures(1, &textureNormal);
 }
 
 int main()
@@ -214,7 +230,8 @@ int main()
   cameraMatrix[2] = glm::vec4(z,0.0);
   cameraMatrix[3] = glm::vec4(pos,1.0);
 
-  lightSource = glm::vec3(-1.f,-1.f,-1.f);
+  lightSource = glm::vec3(0.f,1.f,0.f);
+  float lightRotate = 0.25f;
 
   while(running)
   {
@@ -229,6 +246,24 @@ int main()
         {
           case SDLK_ESCAPE:
             running = false;
+            break;
+        }
+      }
+      else if(event.type == SDL_KEYDOWN)
+      {
+        switch( event.key.keysym.sym )
+        {
+          case SDLK_j:
+            lightSource = glm::rotateZ(lightSource, lightRotate);
+            break;
+          case SDLK_l:
+            lightSource = glm::rotateZ(lightSource, -lightRotate);
+            break;
+          case SDLK_i:
+            lightSource = glm::rotateX(lightSource, lightRotate);
+            break;
+          case SDLK_k:
+            lightSource = glm::rotateX(lightSource, -lightRotate);
             break;
         }
       }
