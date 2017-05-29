@@ -21,7 +21,8 @@ glm::mat4 modelMatrix;
 glm::mat4 screenMatrix;
 glm::mat4 projectionMatrix;
 glm::mat4 viewMatrix;
-glm::mat4 cameraMatrix;
+//glm::mat4 cameraMatrix;
+Camera<float> camera;
 glm::mat4 mvp;
 
 glm::vec3 lightSource;
@@ -33,6 +34,8 @@ GLuint   squareIndicesBuffer;
 
 GLuint   textureColor;
 GLuint   textureNormal;
+GLuint   textureSpecular;
+GLuint   textureDepth;
 
 
 void Render(int a_width, int a_height)
@@ -45,7 +48,11 @@ void Render(int a_width, int a_height)
 
 
 
-  viewMatrix = glm::inverse(cameraMatrix);
+  viewMatrix = glm::inverse(camera.m_matrix);
+
+  glm::vec3 cameraPos = glm::vec3(camera.m_matrix[3]); //-pos
+
+  //modelMatrix = modelMatrix * glm::rotate(0.01f, glm::vec3(0.0f, 0.0f, 1.0f));
 
   mvp = projectionMatrix * viewMatrix * modelMatrix;
   //mvp = modelMatrix;
@@ -54,7 +61,7 @@ void Render(int a_width, int a_height)
   glEnable(GL_TEXTURE_2D);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
-  glDisable(GL_CULL_FACE);
+  //glEnable(GL_CULL_FACE);
   glDepthMask(GL_TRUE);
 
   glClearColor(0.0f, 0.0f, 0.0f, 1.f);
@@ -73,15 +80,28 @@ void Render(int a_width, int a_height)
 
   glUniformMatrix4fv(squareShader.m_locations[2], 1, GL_FALSE, (float*)&mvp);
 
-  glUniform3fv(squareShader.m_locations[3], 1, (float*)&lightSource);
+  glUniformMatrix4fv(squareShader.m_locations[3], 1, GL_FALSE, (float*)&modelMatrix);
+
+  glUniform3fv(squareShader.m_locations[4], 1, (float*)&lightSource);
+
+  glUniform3fv(squareShader.m_locations[9], 1, (float*)&cameraPos);
+  glUniform1f(squareShader.m_locations[10], 2.2f);  //gamma
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, textureColor);
-  glUniform1i(squareShader.m_locations[4],0);
+  glUniform1i(squareShader.m_locations[5],0);
 
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, textureNormal);
-  glUniform1i(squareShader.m_locations[5],1);
+  glUniform1i(squareShader.m_locations[6],1);
+
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D, textureSpecular);
+  glUniform1i(squareShader.m_locations[7],2);
+
+  glActiveTexture(GL_TEXTURE3);
+  glBindTexture(GL_TEXTURE_2D, textureDepth);
+  glUniform1i(squareShader.m_locations[8],3);
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, squareIndicesBuffer);
 
@@ -126,13 +146,19 @@ void LoadData()
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t)*6, squareIndices,
                GL_STATIC_DRAW);
 
-  squareShader.SetNumAttributes(6);
+  squareShader.SetNumAttributes(11);
   squareShader.AddLocation(0, adShader::ATTRIBUTE, "a_pos");
   squareShader.AddLocation(1, adShader::ATTRIBUTE, "a_texCoord");
   squareShader.AddLocation(2, adShader::UNIFORM, "u_mvp");
-  squareShader.AddLocation(3, adShader::UNIFORM, "u_light");
-  squareShader.AddLocation(4, adShader::UNIFORM, "u_textureColor");
-  squareShader.AddLocation(5, adShader::UNIFORM, "u_textureNormal");
+  squareShader.AddLocation(3, adShader::UNIFORM, "u_modelMatrix");
+  squareShader.AddLocation(4, adShader::UNIFORM, "u_light");
+  squareShader.AddLocation(5, adShader::UNIFORM, "u_textureColor");
+  squareShader.AddLocation(6, adShader::UNIFORM, "u_textureNormal");
+  squareShader.AddLocation(7, adShader::UNIFORM, "u_textureSpecular");
+  squareShader.AddLocation(8, adShader::UNIFORM, "u_textureDepth");
+
+  squareShader.AddLocation(9, adShader::UNIFORM, "u_cameraPos");
+  squareShader.AddLocation(10, adShader::UNIFORM, "u_gamma");
 
 
 
@@ -170,8 +196,8 @@ void LoadData()
   SDL_Surface* imageColor = adImage::LoadImage("textures/photosculpt-peebles-diffuse.jpg");
 
   textureColor = adImage::MakeTexture(imageColor);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glBindTexture(GL_TEXTURE_2D, 0);
 
   SDL_FreeSurface(imageColor);
@@ -179,11 +205,29 @@ void LoadData()
   SDL_Surface* imageNormal = adImage::LoadImage("textures/photosculpt-peebles-normal.jpg");
 
   textureNormal = adImage::MakeTexture(imageNormal);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glBindTexture(GL_TEXTURE_2D, 0);
 
   SDL_FreeSurface(imageNormal);
+
+  SDL_Surface* imageSpecular = adImage::LoadImage("textures/photosculpt-peebles-specular.jpg");
+
+  textureSpecular = adImage::MakeTexture(imageSpecular);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  SDL_FreeSurface(imageSpecular);
+
+  SDL_Surface* imageDepth = adImage::LoadImage("textures/photosculpt-peebles-depth.jpg");
+
+  textureDepth = adImage::MakeTexture(imageDepth);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  SDL_FreeSurface(imageDepth);
 }
 
 void FreeData()
@@ -194,6 +238,8 @@ void FreeData()
   glDeleteBuffers(1, &squareIndicesBuffer);
   glDeleteTextures(1, &textureColor);
   glDeleteTextures(1, &textureNormal);
+  glDeleteTextures(1, &textureSpecular);
+  glDeleteTextures(1, &textureDepth);
 }
 
 int main()
@@ -217,6 +263,7 @@ int main()
 
   LoadData();
 
+
   glm::vec3 up(0.f,0.f,1.f);
   glm::vec3 pos(0.f, -2.f, 0.f);
   //glm::vec3 center(0.f,0.f,0.f);
@@ -225,10 +272,10 @@ int main()
   glm::vec3 x = glm::cross(up,z);
   glm::vec3 y = glm::cross(z,x);
 
-  cameraMatrix[0] = glm::vec4(x,0.0);
-  cameraMatrix[1] = glm::vec4(y,0.0);
-  cameraMatrix[2] = glm::vec4(z,0.0);
-  cameraMatrix[3] = glm::vec4(pos,1.0);
+  camera.m_matrix[0] = glm::vec4(x,0.0);
+  camera.m_matrix[1] = glm::vec4(y,0.0);
+  camera.m_matrix[2] = glm::vec4(z,0.0);
+  camera.m_matrix[3] = glm::vec4(pos,1.0);
 
   lightSource = glm::vec3(0.f,1.f,0.f);
   float lightRotate = 0.25f;
