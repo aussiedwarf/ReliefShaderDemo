@@ -50,12 +50,24 @@ void Render(int a_width, int a_height)
 
   viewMatrix = glm::inverse(camera.m_matrix);
 
-  glm::vec3 cameraPos = glm::vec3(camera.m_matrix[3]); //-pos
+
 
   //modelMatrix = modelMatrix * glm::rotate(0.01f, glm::vec3(0.0f, 0.0f, 1.0f));
 
   mvp = projectionMatrix * viewMatrix * modelMatrix;
-  //mvp = modelMatrix;
+
+  glm::mat4 screenMatrix;
+  screenMatrix[0].x = a_width *0.5f;
+  screenMatrix[1].y = a_height *0.5f;
+  screenMatrix[3].x = a_width *0.5f;
+  screenMatrix[3].y = a_height *0.5f;
+
+  glm::mat4 smvp = screenMatrix * mvp;
+
+  glm::mat4 inverseMatrix = glm::inverse(smvp);
+
+  glm::vec3 light = glm::vec3(glm::vec4(lightSource,0.0f) * glm::inverse(modelMatrix));
+  glm::vec3 cameraPos = glm::vec3(camera.m_matrix[3] * glm::inverse(modelMatrix));
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_TEXTURE_2D);
@@ -82,10 +94,12 @@ void Render(int a_width, int a_height)
 
   glUniformMatrix4fv(squareShader.m_locations[3], 1, GL_FALSE, (float*)&modelMatrix);
 
-  glUniform3fv(squareShader.m_locations[4], 1, (float*)&lightSource);
+  glUniform3fv(squareShader.m_locations[4], 1, (float*)&light);
 
   glUniform3fv(squareShader.m_locations[9], 1, (float*)&cameraPos);
   glUniform1f(squareShader.m_locations[10], 2.2f);  //gamma
+
+  glUniformMatrix4fv(squareShader.m_locations[11], 1, GL_FALSE, (float*)&inverseMatrix);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, textureColor);
@@ -146,7 +160,7 @@ void LoadData()
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t)*6, squareIndices,
                GL_STATIC_DRAW);
 
-  squareShader.SetNumAttributes(11);
+  squareShader.SetNumAttributes(12);
   squareShader.AddLocation(0, adShader::ATTRIBUTE, "a_pos");
   squareShader.AddLocation(1, adShader::ATTRIBUTE, "a_texCoord");
   squareShader.AddLocation(2, adShader::UNIFORM, "u_mvp");
@@ -159,6 +173,7 @@ void LoadData()
 
   squareShader.AddLocation(9, adShader::UNIFORM, "u_cameraPos");
   squareShader.AddLocation(10, adShader::UNIFORM, "u_gamma");
+  squareShader.AddLocation(11, adShader::UNIFORM, "u_inverseMvp");
 
 
 
@@ -277,7 +292,7 @@ int main()
   camera.m_matrix[2] = glm::vec4(z,0.0);
   camera.m_matrix[3] = glm::vec4(pos,1.0);
 
-  lightSource = glm::vec3(0.f,1.f,0.f);
+  lightSource = glm::vec3(0.f,-1.f,0.f);
   float lightRotate = 0.25f;
 
   while(running)
