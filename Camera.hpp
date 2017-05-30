@@ -16,7 +16,7 @@ public:
   void Orbit();
   void Move(glm::tvec3<T> a_v)
   {
-    m_matrix[3] += glm::tvec4<T>(a_v, 0);
+    m_matrix[3] += m_matrix * glm::tvec4<T>(a_v, 0);
   }
 
   void Pan(glm::tvec3<T> a_v)

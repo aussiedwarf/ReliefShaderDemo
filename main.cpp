@@ -312,6 +312,26 @@ int main()
           case SDLK_k:
             lightSource = glm::rotateX(lightSource, -lightRotate);
             break;
+
+
+          case SDLK_a:
+            camera.Move(glm::vec3(-1.0f,0.0f,0.0f));
+            break;
+          case SDLK_d:
+            camera.Move(glm::vec3(1.0f,0.0f,0.0f));
+            break;
+          case SDLK_w:
+            camera.Move(glm::vec3(0.0f,0.0f,-1.0f));
+            break;
+          case SDLK_s:
+            camera.Move(glm::vec3(0.0f,0.0f,1.0f));
+            break;
+          case SDLK_q:
+            camera.Move(glm::vec3(0.0f,1.0f,0.0f));
+            break;
+          case SDLK_e:
+            camera.Move(glm::vec3(0.0f,-1.0f,0.0f));
+            break;
         }
       }
       else if(event.type == SDL_WINDOWEVENT)
