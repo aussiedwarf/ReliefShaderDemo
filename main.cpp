@@ -257,7 +257,7 @@ void FreeData()
   glDeleteTextures(1, &textureDepth);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
   int width = 800;
   int height = 600;
@@ -266,7 +266,8 @@ int main()
 
   bool running = true;
 
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER | SDL_INIT_EVENTS))
+  // | SDL_INIT_TIMER crashes with mingw
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO  | SDL_INIT_EVENTS))
   {
     fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
     return 0;
@@ -294,6 +295,7 @@ int main()
 
   lightSource = glm::vec3(0.f,-1.f,0.f);
   float lightRotate = 0.25f;
+
 
   while(running)
   {

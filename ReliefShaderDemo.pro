@@ -22,6 +22,29 @@ win32-g++{
   PLATFORM=windows
   COMPILER=mingw
   ARCHITECTURE=x86
+
+  CONFIG(debug, debug|release) {
+    LIBS += -L../ad/master/build/windows/mingw/x86/debug/bin
+    PRE_TARGETDEPS += ../ad/master/build/windows/mingw/x86/debug/bin/libad.a
+  }
+
+  CONFIG(release, debug|release) {
+    LIBS += -L../ad/master/build/windows/mingw/x86/release/bin
+    PRE_TARGETDEPS += ../ad/master/build/windows/mingw/x86/release/bin/libad.a
+  }
+
+  LIBS += -L../SDL2/2.0.5/i686-w64-mingw32/lib
+  LIBS += -L../SDL2/SDL2_ttf/2.0.14/i686-w64-mingw32/lib
+  LIBS += -L../SDL2/SDL2_image/2.0.1/i686-w64-mingw32/lib
+  LIBS += -L../glew/glew-2.0.0/mingw32/lib
+  LIBS += -pthread -lad -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -lglew32 -lOpenGL32
+
+  INCLUDEPATH +=  ../sdl2/2.0.5/i686-w64-mingw32/include \
+                  ../sdl2/2.0.5/i686-w64-mingw32/include/SDL2 \
+                  ../sdl2/SDL2_image/2.0.1/i686-w64-mingw32/include \
+                  ../sdl2/SDL2_ttf/2.0.14/i686-w64-mingw32/include \
+                  ../glew/glew-2.0.0/include
+
 }
 
 linux-g++-32{
@@ -46,6 +69,8 @@ linux-g++-64{
   }
 
   LIBS += -pthread -lGL -lGLEW -lSDL2
+
+  LIBS += -lad
 }
 
 macx{
@@ -67,6 +92,8 @@ macx{
   }
 
   LIBS += -F/Library/Frameworks -framework SDL2 -framework SDL2_ttf -framework SDL2_image -framework OpenGL
+
+  LIBS += -lad
 
 }
 
@@ -100,6 +127,8 @@ emscripten{
   LIBS += ../../../.emscripten_cache/asmjs/sdl2-ttf.bc
   LIBS += ../../../.emscripten_cache/asmjs/freetype.bc
 
+  LIBS += -lad
+
   QMAKE_CXXFLAGS += -s USE_SDL=2 -s USE_SDL_TTF=2 -s USE_SDL_IMAGE=2 -s USE_FREETYPE=1
 # -s SDL2_IMAGE_FORMATS=[png]
 
@@ -111,7 +140,7 @@ emscripten{
   MAKEFILE =    MakefileEmscripten
 }
 
-LIBS += -lad
+
 
 
 DESTDIR =     build/$${APPLICATION}/$${PLATFORM}/$${COMPILER}/$${ARCHITECTURE}/$${BUILD}/bin
