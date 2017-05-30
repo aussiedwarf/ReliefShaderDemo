@@ -30,9 +30,23 @@ mat3 cotangent_frame( vec3 N, vec3 p, vec2 uv )
     return mat3( T * invmax, B * invmax, N );
 }
 
-void main()
+vec3 GetSpecular(vec3 normal)
 {
   float material = 256.0;
+  vec3 specularColor = vec3(1.0,1.0,0.95);
+  
+  vec3 halfAngle = normalize(normalize(-u_cameraPos) + u_light);
+  
+  float specularDot = clamp(dot(normalize(normal), halfAngle), 0.0, 1.0);
+  float p = texture2D(u_textureSpecular, v_texCoord).r;
+  vec3 specular = specularColor * pow(specularDot, material) * p;
+
+  return specular;
+}
+
+void main()
+{
+  
   float ambient = 0.125;
   
   vec3 color = pow(texture2D(u_textureColor, v_texCoord).rgb, vec3(1.0/u_gamma));
@@ -44,12 +58,8 @@ void main()
   
   color = color * (max(dot(v, u_light),0.0) * (1.0 - ambient) + ambient);
   
+  vec3 specular = GetSpecular(v);
   
-  vec3 halfAngle = normalize(normalize(-u_cameraPos) + u_light);
-  vec3 specularColor = vec3(1.0,1.0,0.75);
-  float specularDot = clamp(dot(normalize(v), halfAngle), 0.0, 1.0);
-  float p = texture2D(u_textureSpecular, v_texCoord).r;
-  vec3 specular = specularColor * pow(specularDot, material) * p;
   
   color = min(color + specular, 1.0);
   
