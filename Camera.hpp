@@ -21,14 +21,23 @@ public:
 
   void Pan(glm::tvec3<T> a_v)
   {
-    glm::tmat4x4<T> matrix = m_matrix;
 
     if(a_v.x)
     {
-      matrix[0] = m_matrix[0];
+
+      m_matrix = m_matrix * glm::rotate(a_v.x, glm::tvec3<T>(1.0f,0.0f,0.0f));
+    }
+    if(a_v.y)
+    {
+
+      m_matrix = m_matrix * glm::rotate(a_v.y, glm::tvec3<T>(0.0f,1.0f,0.0f));
+    }
+    if(a_v.z)
+    {
+      m_matrix = m_matrix * glm::rotate(a_v.z, glm::tvec3<T>(0.0f,0.0f,1.0f));
     }
 
-    m_matrix = matrix;
+    //m_matrix = matrix;
   }
 
 };

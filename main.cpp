@@ -1,7 +1,7 @@
 /*
  * Textures from http://photosculpt.net/gallery/textures-seamless-tileable/
  * */
-
+#define GLM_FORCE_RADIANS
 #include "Camera.hpp"
 
 #include "adCore/adShader.hpp"
@@ -44,7 +44,7 @@ void Render(int a_width, int a_height)
 
   projectionMatrix = glm::perspective(glm::pi<float>()*0.25f,
                                       static_cast<float>(a_width) /
-                                      static_cast<float>(a_height), 0.1f, 10.f);
+                                      static_cast<float>(a_height), 0.1f, 20.f);
 
 
 
@@ -298,6 +298,8 @@ int main()
       }
       else if(event.type == SDL_KEYDOWN)
       {
+        float moveSpeed = 0.1f;
+        float panSpeed = 0.1f;
         switch( event.key.keysym.sym )
         {
           case SDLK_j:
@@ -313,24 +315,52 @@ int main()
             lightSource = glm::rotateX(lightSource, -lightRotate);
             break;
 
-
+          //move camera
           case SDLK_a:
-            camera.Move(glm::vec3(-1.0f,0.0f,0.0f));
+            camera.Move(glm::vec3(-moveSpeed,0.0f,0.0f));
             break;
           case SDLK_d:
-            camera.Move(glm::vec3(1.0f,0.0f,0.0f));
+            camera.Move(glm::vec3(moveSpeed,0.0f,0.0f));
             break;
           case SDLK_w:
-            camera.Move(glm::vec3(0.0f,0.0f,-1.0f));
+            camera.Move(glm::vec3(0.0f,0.0f,-moveSpeed));
             break;
           case SDLK_s:
-            camera.Move(glm::vec3(0.0f,0.0f,1.0f));
+            camera.Move(glm::vec3(0.0f,0.0f,moveSpeed));
             break;
+          case SDLK_r:
+            camera.Move(glm::vec3(0.0f,moveSpeed,0.0f));
+            break;
+          case SDLK_f:
+            camera.Move(glm::vec3(0.0f,-moveSpeed,0.0f));
+            break;
+
+          //pan
           case SDLK_q:
-            camera.Move(glm::vec3(0.0f,1.0f,0.0f));
+            camera.Pan(glm::vec3(0.0f,panSpeed,0.0f));
             break;
           case SDLK_e:
-            camera.Move(glm::vec3(0.0f,-1.0f,0.0f));
+            camera.Pan(glm::vec3(0.0f,-panSpeed,0.0f));
+            break;
+          case SDLK_t:
+            camera.Pan(glm::vec3(0.0f,0.0f,panSpeed));
+            break;
+          case SDLK_g:
+            camera.Pan(glm::vec3(0.0f,0.0f,-panSpeed));
+            break;
+          case SDLK_z:
+            camera.Pan(glm::vec3(panSpeed,0.0f,0.0f));
+            break;
+          case SDLK_x:
+            camera.Pan(glm::vec3(-panSpeed,0.0f,0.0f));
+            break;
+
+          //model
+          case SDLK_c:
+            modelMatrix = modelMatrix * glm::rotate(panSpeed, glm::vec3(0.0f, 0.0f, 1.0f));
+            break;
+          case SDLK_v:
+            modelMatrix = modelMatrix * glm::rotate(-panSpeed, glm::vec3(0.0f, 0.0f, 1.0f));
             break;
         }
       }
